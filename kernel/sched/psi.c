@@ -1219,7 +1219,7 @@ __poll_t psi_trigger_poll(void **trigger_ptr,
 static ssize_t psi_write(struct file *file, const char __user *user_buf,
 			 size_t nbytes, enum psi_res res)
 {
-	char buf[32];
+	char buf[32] = { 0 };
 	size_t buf_size;
 	struct seq_file *seq;
 	struct psi_trigger *new;
@@ -1247,7 +1247,7 @@ static ssize_t psi_write(struct file *file, const char __user *user_buf,
 		return -EBUSY;
 	}
 
-	new = psi_trigger_create(&psi_system, buf, nbytes, res);
+	new = psi_trigger_create(&psi_system, buf, buf_size, res);
 	if (IS_ERR(new)) {
 		mutex_unlock(&seq->lock);
 		return PTR_ERR(new);
