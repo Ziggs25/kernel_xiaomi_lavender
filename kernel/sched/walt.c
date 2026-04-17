@@ -3249,7 +3249,7 @@ static void transfer_busy_time(struct rq *rq, struct related_thread_group *grp,
 		dst_nt_prev_runnable_sum = &rq->nt_prev_runnable_sum;
 
 		if (*src_curr_runnable_sum < p->ravg.curr_window) {
-			printk_deferred("WALT-UG pid=%u CPU=%d event=%d src_crs=%llu is lesser than task_contrib=%u",
+			printk_deferred("WALT-BUG pid=%u CPU=%d event=%d src_crs=%llu is lesser than task_contrib=%u",
 				p->pid, cpu, event, *src_curr_runnable_sum,
 				p->ravg.curr_window);
 			walt_task_dump(p);
