@@ -101,7 +101,7 @@ static ssize_t fuse_conn_max_background_read(struct file *file,
 					     loff_t *ppos)
 {
 	struct fuse_conn *fc;
-	unsigned val;
+	unsigned val = 0;
 
 	fc = fuse_ctl_file_conn_get(file);
 	if (!fc)
