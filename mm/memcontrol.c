@@ -919,7 +919,7 @@ struct mem_cgroup *mem_cgroup_iter(struct mem_cgroup *root,
 				   struct mem_cgroup *prev,
 				   struct mem_cgroup_reclaim_cookie *reclaim)
 {
-	struct mem_cgroup_reclaim_iter *iter;
+	struct mem_cgroup_reclaim_iter *iter = NULL;
 	struct cgroup_subsys_state *css = NULL;
 	struct mem_cgroup *memcg = NULL;
 	struct mem_cgroup *pos = NULL;
@@ -999,7 +999,7 @@ struct mem_cgroup *mem_cgroup_iter(struct mem_cgroup *root,
 		memcg = NULL;
 	}
 
-	if (reclaim) {
+	if (reclaim && iter) {
 		/*
 		 * The position could have already been updated by a competing
 		 * thread, so check that the value hasn't changed since we read
