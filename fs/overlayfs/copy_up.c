@@ -738,7 +738,7 @@ static int ovl_copy_up_meta_inode_data(struct ovl_copy_up_ctx *c)
 	 * Writing to upper file will clear security.capability xattr. We
 	 * don't want that to happen for normal copy-up operation.
 	 */
-	if (capability && cap_size > 0) {
+	if (capability) {
 		err = ovl_do_setxattr(upperpath.dentry, XATTR_NAME_CAPS,
 				      capability, cap_size, 0);
 		if (err)
