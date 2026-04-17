@@ -10918,7 +10918,7 @@ SYSCALL_DEFINE5(perf_event_open,
 	struct perf_event *group_leader = NULL, *output_event = NULL;
 	struct perf_event *event = NULL, *sibling;
 	struct perf_event_attr attr;
-	struct perf_event_context *ctx, *gctx;
+	struct perf_event_context *ctx, *gctx = NULL;
 	struct file *event_file = NULL;
 	struct fd group = {NULL, 0};
 	struct task_struct *task = NULL;
