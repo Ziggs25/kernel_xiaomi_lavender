@@ -725,7 +725,7 @@ static void posix_cpu_timer_get(struct k_itimer *timer, struct itimerspec64 *itp
 {
 	struct task_struct *p = timer->it.cpu.task;
 	u64 now = 0;
-	int err = 0;
+	int err;
 
 	if (WARN_ON_ONCE(!p))
 		return;
