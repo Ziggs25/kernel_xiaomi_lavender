@@ -578,8 +578,8 @@ static int posix_cpu_timer_set(struct k_itimer *timer, int timer_flags,
 	unsigned long flags;
 	struct sighand_struct *sighand;
 	struct task_struct *p = timer->it.cpu.task;
-	u64 old_expires, new_expires, old_incr, val;
-	int ret;
+	u64 old_expires, new_expires, old_incr, val = 0;
+	int ret, err;
 
 	if (WARN_ON_ONCE(!p))
 		return -EINVAL;
@@ -625,9 +625,14 @@ static int posix_cpu_timer_set(struct k_itimer *timer, int timer_flags,
 	 * check if it's already passed.  In short, we need a sample.
 	 */
 	if (CPUCLOCK_PERTHREAD(timer->it_clock)) {
-		cpu_clock_sample(timer->it_clock, p, &val);
+		err = cpu_clock_sample(timer->it_clock, p, &val);
 	} else {
-		cpu_timer_sample_group(timer->it_clock, p, &val);
+		err = cpu_timer_sample_group(timer->it_clock, p, &val);
+	}
+
+	if (err) {
+		unlock_task_sighand(p, &flags);
+		return err;
 	}
 
 	if (old) {
@@ -719,7 +724,8 @@ static int posix_cpu_timer_set(struct k_itimer *timer, int timer_flags,
 static void posix_cpu_timer_get(struct k_itimer *timer, struct itimerspec64 *itp)
 {
 	struct task_struct *p = timer->it.cpu.task;
-	u64 now;
+	u64 now = 0;
+	int err = 0;
 
 	if (WARN_ON_ONCE(!p))
 		return;
@@ -736,7 +742,7 @@ static void posix_cpu_timer_get(struct k_itimer *timer, struct itimerspec64 *itp
 	 * Sample the clock to take the difference with the expiry time.
 	 */
 	if (CPUCLOCK_PERTHREAD(timer->it_clock)) {
-		cpu_clock_sample(timer->it_clock, p, &now);
+		err = cpu_clock_sample(timer->it_clock, p, &now);
 	} else {
 		struct sighand_struct *sighand;
 		unsigned long flags;
@@ -756,9 +762,14 @@ static void posix_cpu_timer_get(struct k_itimer *timer, struct itimerspec64 *itp
 			timer->it.cpu.expires = 0;
 			return;
 		} else {
-			cpu_timer_sample_group(timer->it_clock, p, &now);
+			err = cpu_timer_sample_group(timer->it_clock, p, &now);
 			unlock_task_sighand(p, &flags);
 		}
+	}
+
+	if (err) {
+		timer->it.cpu.expires = 0;
+		return;
 	}
 
 	if (now < timer->it.cpu.expires) {
@@ -1010,7 +1021,8 @@ static void posix_cpu_timer_rearm(struct k_itimer *timer)
 	struct task_struct *p = timer->it.cpu.task;
 	struct sighand_struct *sighand;
 	unsigned long flags;
-	u64 now;
+	u64 now = 0;
+	int err;
 
 	if (WARN_ON_ONCE(!p))
 		return;
@@ -1019,7 +1031,10 @@ static void posix_cpu_timer_rearm(struct k_itimer *timer)
 	 * Fetch the current sample and update the timer's expiry time.
 	 */
 	if (CPUCLOCK_PERTHREAD(timer->it_clock)) {
-		cpu_clock_sample(timer->it_clock, p, &now);
+		err = cpu_clock_sample(timer->it_clock, p, &now);
+		if (err)
+			return;
+
 		bump_cpu_timer(timer, now);
 		if (unlikely(p->exit_state))
 			return;
@@ -1045,7 +1060,10 @@ static void posix_cpu_timer_rearm(struct k_itimer *timer)
 			/* If the process is dying, no need to rearm */
 			goto unlock;
 		}
-		cpu_timer_sample_group(timer->it_clock, p, &now);
+		err = cpu_timer_sample_group(timer->it_clock, p, &now);
+		if (err)
+			goto unlock;
+
 		bump_cpu_timer(timer, now);
 		/* Leave the sighand locked for the call below.  */
 	}
