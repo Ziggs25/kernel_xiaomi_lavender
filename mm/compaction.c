@@ -2545,7 +2545,7 @@ static void kcompactd_do_work(pg_data_t *pgdat)
 	count_compact_event(KCOMPACTD_WAKE);
 
 	for (zoneid = 0; zoneid <= cc.classzone_idx; zoneid++) {
-		int status;
+		enum compact_result status;
 
 		zone = &pgdat->node_zones[zoneid];
 		if (!populated_zone(zone))
