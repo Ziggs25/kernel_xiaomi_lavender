@@ -1216,7 +1216,7 @@ static void override_custom_release(char __user *release, size_t len)
 	char *buf;
 	size_t n;
 
-	if (!release || !len)
+	if (!release || len == 0)
 		return;
 
 	buf = kstrdup_quotable_cmdline(current, GFP_KERNEL);
@@ -1225,12 +1225,11 @@ static void override_custom_release(char __user *release, size_t len)
 
 	if (strstr(buf, CONFIG_UNAME_OVERRIDE_TARGET)) {
 		n = strnlen(CONFIG_UNAME_OVERRIDE_STRING, len - 1) + 1;
-		if (copy_to_user(release, CONFIG_UNAME_OVERRIDE_STRING, n)) {
-			kfree(buf);
-			return;
-		}
+		if (copy_to_user(release, CONFIG_UNAME_OVERRIDE_STRING, n))
+			goto out;
 	}
 
+out:
 	kfree(buf);
 #endif
 }
