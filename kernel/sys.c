@@ -1214,14 +1214,21 @@ static void override_custom_release(char __user *release, size_t len)
 {
 #ifdef CONFIG_UNAME_OVERRIDE
 	char *buf;
+	size_t n;
+
+	if (!release || !len)
+		return;
 
 	buf = kstrdup_quotable_cmdline(current, GFP_KERNEL);
 	if (buf == NULL)
 		return;
 
 	if (strstr(buf, CONFIG_UNAME_OVERRIDE_TARGET)) {
-		copy_to_user(release, CONFIG_UNAME_OVERRIDE_STRING,
-			       strlen(CONFIG_UNAME_OVERRIDE_STRING) + 1);
+		n = strnlen(CONFIG_UNAME_OVERRIDE_STRING, len - 1) + 1;
+		if (copy_to_user(release, CONFIG_UNAME_OVERRIDE_STRING, n)) {
+			kfree(buf);
+			return;
+		}
 	}
 
 	kfree(buf);
